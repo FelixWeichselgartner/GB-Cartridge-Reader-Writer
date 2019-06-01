@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.4.0">
+<eagle version="9.3.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -8160,6 +8160,9 @@ Source: www.kingbright.com</description>
 <wire x1="58.42" y1="-5.08" x2="58.42" y2="7.62" width="0.1524" layer="91"/>
 <wire x1="58.42" y1="7.62" x2="57.15" y2="7.62" width="0.1524" layer="91"/>
 <junction x="57.15" y="7.62"/>
+<pinref part="S1" gate="1" pin="S1"/>
+<wire x1="63.5" y1="-5.08" x2="63.5" y2="-2.54" width="0.1524" layer="91"/>
+<junction x="63.5" y="-5.08"/>
 </segment>
 </net>
 <net name="N$52" class="0">
@@ -8572,6 +8575,9 @@ Source: www.kingbright.com</description>
 <wire x1="76.2" y1="5.08" x2="69.85" y2="5.08" width="0.1524" layer="91"/>
 <pinref part="U$1" gate="G$1" pin="A0"/>
 <wire x1="69.85" y1="5.08" x2="69.85" y2="7.62" width="0.1524" layer="91"/>
+<pinref part="S1" gate="1" pin="P1"/>
+<wire x1="73.66" y1="-5.08" x2="73.66" y2="-2.54" width="0.1524" layer="91"/>
+<junction x="73.66" y="-5.08"/>
 </segment>
 </net>
 <net name="N$46" class="0">
