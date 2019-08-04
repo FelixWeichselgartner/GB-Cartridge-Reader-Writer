@@ -11,6 +11,10 @@
  Works with Arduino Duemilanove and Uno. Will work for 5V Arduinos but requires wiring changes.
 
  Speed increase thanks to Frode vdM. (fvdm1992@yahoo.no) and David R
+
+ ***********************************************
+
+ Some changes made by Felix Weichselgartner.
  
 */
 
@@ -18,12 +22,27 @@
 int latchPin = 10;
 int dataPin = 11;
 int clockPin = 12;
-int rdPin = A1;
 int wrPin = 13;
+int rdPin = A1;
 int mreqPin = A4;
 int led = A3;
+int readPins[8] = {2, 3, 4, 5, 6, 7, 8, 9};
 
-#include "pindeclarations.h"
+#define wrPin_high    digitalWrite(wrPin, HIGH);
+#define wrPin_low     digitalWrite(wrPin, LOW);
+#define mreqPin_high  digitalWrite(mreqPin, HIGH);
+#define mreqPin_low   digitalWrite(mreqPin, LOW);
+#define rdPin_high    digitalWrite(rdPin, HIGH);
+#define rdPin_low     digitalWrite(rdPin, LOW);
+#define latchPin_high digitalWrite(latchPin, HIGH);
+#define latchPin_low  digitalWrite(latchPin, LOW);
+#define dataPin_high  digitalWrite(dataPin, HIGH);
+#define dataPin_low   digitalWrite(dataPin, LOW);
+#define clockPin_high digitalWrite(clockPin, HIGH);
+#define clockPin_low  digitalWrite(clockPin, LOW);
+#define led_high      digitalWrite(ledPin, HIGH);
+#define led_low       digitalWrite(ledPin, LOW);
+
 #include <SPI.h>
 
 void setup() {
@@ -36,13 +55,9 @@ void setup() {
   pinMode(mreqPin, OUTPUT);
   pinMode(led, OUTPUT);
 
-  /*
-  for (int i = 2; i < 10; i++) {
-    pinMode(i, OUTPUT);
-  }*/
-  // Set pins as inputs
-  DDRB &= ~((1<<PB0) | (1<<PB1)); // D8 & D9
-  DDRD &= ~((1<<PD2) | (1<<PD3) | (1<<PD4) | (1<<PD5) | (1<<PD6) | (1<<PD7)); // D2 to D7
+  for (int i = 0; i < 8; i++) {
+    pinMode(readPins[i], INPUT);
+  }
   
   // Setup SPI
   SPI.begin();
