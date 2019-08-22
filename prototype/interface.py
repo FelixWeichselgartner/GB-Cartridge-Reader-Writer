@@ -4,6 +4,24 @@ import sys
 import time
 import atexit
 
+
+def format_filename(s):
+    """
+    https://gist.github.com/seanh/93666
+    Take a string and return a valid filename constructed from the string.
+    Uses a whitelist approach: any characters not present in valid_chars are
+    removed. Also spaces are replaced with underscores.
+    
+    Note: this method may produce invalid filenames such as ``, `.` or `..`
+    When I use this method I prepend a date string like '2009_01_15_19_46_32_'
+    and append a file extension like '.txt', so I avoid the potential of using
+    an invalid filename.
+    """
+    valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+    filename = ''.join(c for c in s if c in valid_chars)
+    filename = filename.replace(' ', '_')  # I don't like spaces in filenames.
+    return filename
+
 # Change COM2 to the port the Arduino is on.
 # You can lower the baud rate of 400Kbit if you have issues connecting to the Arduino or the ROM has checksum errors
 ser = serial.Serial('COM3', 400000, timeout=1) 
@@ -143,12 +161,13 @@ while (waitInput == 1):
             print ('Not Found')
 
     elif (userInput == "1"):      
-        sys.stdout.write('\nDumping ROM to ' + gameTitle + '.gb... ')
+        filename = format_filename(gameTitle)
+        sys.stdout.write('\nDumping ROM to ' + filename + '.gb... ')
         readBytes = 0
         inRead = 1
-        Kbytesread = 0;
+        Kbytesread = 0
         ser.write('READROM'.encode())
-        f = open('test'+'.gb', 'wb')
+        f = open(filename +'.gb', 'wb')
         while 1:
             if inRead == 1:
                 line = ser.read(64)

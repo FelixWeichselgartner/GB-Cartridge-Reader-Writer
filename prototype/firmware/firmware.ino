@@ -41,6 +41,24 @@ ShiftRegister74HC595 sr (2, dataPin, clockPin, latchPin);
 #define led_high      digitalWrite(ledPin, HIGH);
 #define led_low       digitalWrite(ledPin, LOW);
 
+void shortDelay(int amount) {
+    for (int i = 0; i < amount; i++) {
+        asm volatile("nop");
+    }
+}
+
+void digitalPinsINPUT() {
+  for (int i = 0; i < 8; i++) {
+    pinMode(readPins[i], INPUT);
+  }
+}
+
+void digitalPinsOUTPUT() {
+  for (int i = 0; i < 8; i++) {
+    pinMode(readPins[i], OUTPUT);
+  }
+}
+
 void setup() {
   Serial.begin(400000);
   pinMode(rdPin, OUTPUT);
@@ -48,19 +66,18 @@ void setup() {
   pinMode(mreqPin, OUTPUT);
   pinMode(ledPin, OUTPUT);
 
-  for (int i = 0; i < 8; i++) {
-    pinMode(readPins[i], INPUT);
-  }
+  digitalPinsINPUT();
 }
 
 void loop() {
   // Wait for serial input
   while (Serial.available() <= 0) {
-    digitalWrite(ledPin, HIGH);
+    led_high;
     delay(200);
   }
 
-  digitalWrite(ledPin, LOW);
+  led_low;
+  
   // Decode input
   char readInput[10];
   int readCount = 0;
@@ -217,12 +234,12 @@ uint8_t readByte(int address) {
 
   mreqPin_low;
   rdPin_low;
+
   asm volatile("nop"); // Delay a little (minimum is 2 nops, using 3 to be sure)
   asm volatile("nop");
   asm volatile("nop");
   delay(1);
   
-  //uint8_t bval = ((PINB << 6) | (PIND >> 2)); // Read data
   for (int i = 0; i < 8; i++) {
     if (digitalRead(readPins[i])) {
       val |= (0x01 << i);
@@ -237,34 +254,27 @@ uint8_t readByte(int address) {
 }
 
 void writeByte(int address, uint8_t data) {
-  // Set pins as outputs
-  DDRB |= ((1<<PB0) | (1<<PB1)); // D8 & D9
-  DDRD |= ((1<<PD2) | (1<<PD3) | (1<<PD4) | (1<<PD5) | (1<<PD6) | (1<<PD7)); // D2 to D7
-  
-  shiftoutAddress(address); // Shift out address
-  
-  // Clear outputs and set them to the data variable
-  PORTB &= ~((1<<PB0) | (1<<PB1)); // D8 & D9
-  PORTD &= ~((1<<PD2) | (1<<PD3) | (1<<PD4) | (1<<PD5) | (1<<PD6) | (1<<PD7)); // D2 to D7
-  PORTD |= (data << 2);
-  PORTB |= (data >> 6);
-  
-  // Pulse WR
+  digitalPinsOUTPUT();
+
+  shiftoutAddress(address);
+
+  for (int i = 0; i < 8; i++) {
+    digitalWrite(readPins[i], data & (0x01 << i));
+  }
+
   wrPin_low;
   asm volatile("nop");
+  delay(1);
   wrPin_high;
-  
-  // Set pins as inputs
-  DDRB &= ~((1<<PB0) | (1<<PB1)); // D8 & D9
-  DDRD &= ~((1<<PD2) | (1<<PD3) | (1<<PD4) | (1<<PD5) | (1<<PD6) | (1<<PD7)); // D2 to D7
+  delay(1);
+
+  digitalPinsINPUT();
 }
 
 // Use the shift registers to shift out the address
 void shiftoutAddress(unsigned int shiftAddress) {
   for (int i = 0; i < 16; i++) {
     sr.setNoUpdate(i, ((shiftAddress & 0xFFFF) & (1 << i)) == (1 << i));
-    //digitalWrite(ledPin, ((shiftAddress & 0xFFFF) & (1 << i)) == (1 << i));
-    //delay(1);
   }
   sr.updateRegisters();
   delay(1);
