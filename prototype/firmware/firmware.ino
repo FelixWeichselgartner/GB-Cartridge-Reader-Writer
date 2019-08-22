@@ -18,15 +18,19 @@
  
 */
 
-// Edit these in pindelcarations.h too
+#include <ShiftRegister74HC595.h>
+
 int latchPin = 10;
 int dataPin = 11;
 int clockPin = 12;
-int wrPin = 13;
 int rdPin = A1;
+int wrPin = 13;
 int mreqPin = A4;
-int led = A3;
+int ledPin = A3;
 int readPins[8] = {2, 3, 4, 5, 6, 7, 8, 9};
+
+// parameters: (number of shift registers, data pin, clock pin, latch pin)
+ShiftRegister74HC595 sr (2, dataPin, clockPin, latchPin); 
 
 #define wrPin_high    digitalWrite(wrPin, HIGH);
 #define wrPin_low     digitalWrite(wrPin, LOW);
@@ -34,46 +38,29 @@ int readPins[8] = {2, 3, 4, 5, 6, 7, 8, 9};
 #define mreqPin_low   digitalWrite(mreqPin, LOW);
 #define rdPin_high    digitalWrite(rdPin, HIGH);
 #define rdPin_low     digitalWrite(rdPin, LOW);
-#define latchPin_high digitalWrite(latchPin, HIGH);
-#define latchPin_low  digitalWrite(latchPin, LOW);
-#define dataPin_high  digitalWrite(dataPin, HIGH);
-#define dataPin_low   digitalWrite(dataPin, LOW);
-#define clockPin_high digitalWrite(clockPin, HIGH);
-#define clockPin_low  digitalWrite(clockPin, LOW);
 #define led_high      digitalWrite(ledPin, HIGH);
 #define led_low       digitalWrite(ledPin, LOW);
 
-#include <SPI.h>
-
 void setup() {
   Serial.begin(400000);
-  pinMode(latchPin, OUTPUT);
-  pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
   pinMode(rdPin, OUTPUT);
   pinMode(wrPin, OUTPUT);
   pinMode(mreqPin, OUTPUT);
-  pinMode(led, OUTPUT);
+  pinMode(ledPin, OUTPUT);
 
   for (int i = 0; i < 8; i++) {
     pinMode(readPins[i], INPUT);
   }
-  
-  // Setup SPI
-  SPI.begin();
-  SPI.setBitOrder(MSBFIRST);
-  SPI.setDataMode(SPI_MODE0);
-  SPI.setClockDivider(SPI_CLOCK_DIV2);
 }
 
 void loop() {
   // Wait for serial input
   while (Serial.available() <= 0) {
-    digitalWrite(led, HIGH);
+    digitalWrite(ledPin, HIGH);
     delay(200);
   }
 
-  digitalWrite(led, LOW);
+  digitalWrite(ledPin, LOW);
   // Decode input
   char readInput[10];
   int readCount = 0;
@@ -225,6 +212,7 @@ void loop() {
 }
 
 uint8_t readByte(int address) {
+  byte val = 0x00;
   shiftoutAddress(address); // Shift out address
 
   mreqPin_low;
@@ -232,11 +220,20 @@ uint8_t readByte(int address) {
   asm volatile("nop"); // Delay a little (minimum is 2 nops, using 3 to be sure)
   asm volatile("nop");
   asm volatile("nop");
-  uint8_t bval = ((PINB << 6) | (PIND >> 2)); // Read data
+  delay(1);
+  
+  //uint8_t bval = ((PINB << 6) | (PIND >> 2)); // Read data
+  for (int i = 0; i < 8; i++) {
+    if (digitalRead(readPins[i])) {
+      val |= (0x01 << i);
+    }
+  }
+  
   rdPin_high;
   mreqPin_high;
+  delay(1);
   
-  return bval;
+  return val;
 }
 
 void writeByte(int address, uint8_t data) {
@@ -264,10 +261,11 @@ void writeByte(int address, uint8_t data) {
 
 // Use the shift registers to shift out the address
 void shiftoutAddress(unsigned int shiftAddress) {
-  SPI.transfer(shiftAddress >> 8);
-  SPI.transfer(shiftAddress & 0xFF);
-
-  latchPin_low;
-  asm volatile("nop");
-  latchPin_high;
+  for (int i = 0; i < 16; i++) {
+    sr.setNoUpdate(i, ((shiftAddress & 0xFFFF) & (1 << i)) == (1 << i));
+    //digitalWrite(ledPin, ((shiftAddress & 0xFFFF) & (1 << i)) == (1 << i));
+    //delay(1);
+  }
+  sr.updateRegisters();
+  delay(1);
 }
