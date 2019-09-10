@@ -1,5 +1,14 @@
 #include "Cartridge.hpp"
 
+void Cartridge::reset() {
+    digitalPinsINPUT();
+
+    // Turn everything off
+  rdPin_high(); // RD off
+  wrPin_high(); // WR off
+  mreqPin_high(); // MREQ off
+}
+
 Cartridge::Cartridge(
     int dataPin, 
     int clockPin,
@@ -20,7 +29,9 @@ Cartridge::Cartridge(
         this->dataPins[i] = dataPins[i];
     }
 
-    this->shiftregister = new ShiftRegister74HC595(2, dataPin, clockPin, latchPin)
+    this->shiftregister = new ShiftRegister74HC595(2, dataPin, clockPin, latchPin);
+
+    digitalPinsINPUT();
 }
 
 //----------------------------------------------------------------------------------------------
@@ -71,7 +82,7 @@ void Cartridge::digitalPinsOUTPUT() {
 
 Byte Cartridge::ReadByte(Word address) { 
     byte val = 0x00;
-    shiftoutAddress(address); // Shift out address
+    ShiftOutAddress(address); // Shift out address
 
     mreqPin_low();
     rdPin_low();
@@ -111,22 +122,22 @@ void Cartridge::WriteByte(Word address, Byte data) {
 
 void Cartridge::ShiftOutAddress(Word address) {
     for (int i = 0; i < 16; i++) {
-        shiftregister.setNoUpdate(i, ((address & 0xFFFF) & (1 << i)) == (1 << i));
+        shiftregister->setNoUpdate(i, ((address & 0xFFFF) & (1 << i)) == (1 << i));
     }
-    shiftregister.updateRegisters();
+    shiftregister->updateRegisters();
     shortDelay(10);
 }
 
 void Cartridge::ReadHeader() {
     // Read Cartridge Header
     for (int addr = 0x0134; addr <= 0x143; addr++) {
-        this->gameTitle[(addr-0x0134)] = (char) readByte(addr);
+        this->gameTitle[(addr-0x0134)] = (char) ReadByte(addr);
     }
     this->gameTitle[16] = '\0';
 
-    this->cartridgeType = readByte(0x0147);
-    this->romSize = readByte(0x0148);
-    this->ramSize = readByte(0x0149);
+    this->cartridgeType = ReadByte(0x0147);
+    this->romSize = ReadByte(0x0148);
+    this->ramSize = ReadByte(0x0149);
     this->romBanks = 2; // Default 32K
     this->ramBanks = 1; // Default 8K RAM
 
@@ -167,12 +178,12 @@ void Cartridge::DumpROM() {
     
     // Read x number of banks
     for (int y = 1; y < romBanks; y++) {
-        writeByte(0x2100, y); // Set ROM bank
+        WriteByte(0x2100, y); // Set ROM bank
         if (y > 1) {addr = 0x4000;}
         for (; addr <= 0x7FFF; addr = addr+64) {
             uint8_t readData[64];
             for(int i = 0; i < 64; i++){
-                readData[i] = readByte(addr+i);
+                readData[i] = ReadByte(addr+i);
             }
             Serial.write(readData, 64);
         }
@@ -181,7 +192,7 @@ void Cartridge::DumpROM() {
 
 void Cartridge::DumpRAM() {
     // MBC2 Fix (unknown why this fixes it, maybe has to read ROM before RAM?)
-    readByte(0x0134);
+    ReadByte(0x0134);
 
     unsigned int addr = 0;
     unsigned int endaddr = 0;
@@ -192,30 +203,30 @@ void Cartridge::DumpRAM() {
     // Does cartridge have RAM
     if (endaddr > 0) {
         // Initialise MBC
-        writeByte(0x0000, 0x0A);
+        WriteByte(0x0000, 0x0A);
 
         // Switch RAM banks
         for (int bank = 0; bank < ramBanks; bank++) {
-            writeByte(0x4000, bank);
+            WriteByte(0x4000, bank);
 
             // Read RAM
             for (addr = 0xA000; addr <= endaddr; addr = addr+64) {  
                 uint8_t readData[64];
                 for(int i = 0; i < 64; i++){
-                    readData[i] = readByte(addr+i);
+                    readData[i] = ReadByte(addr+i);
                 }
                 Serial.write(readData, 64);
             }
         }
         
         // Disable RAM
-        writeByte(0x0000, 0x00);
+        WriteByte(0x0000, 0x00);
     }
 }
 
 void Cartridge::UploadRAM() {
     // MBC2 Fix (unknown why this fixes it, maybe has to read ROM before RAM?)
-    readByte(0x0134);
+    ReadByte(0x0134);
     unsigned int addr = 0;
     unsigned int endaddr = 0;
     if (cartridgeType == 6 && ramSize == 0) { endaddr = 0xA1FF; } // MBC2 512bytes (nibbles)
@@ -225,11 +236,11 @@ void Cartridge::UploadRAM() {
     // Does cartridge have RAM
     if (endaddr > 0) {
         // Initialise MBC
-        writeByte(0x0000, 0x0A);
+        WriteByte(0x0000, 0x0A);
         
         // Switch RAM banks
         for (int bank = 0; bank < ramBanks; bank++) {
-            writeByte(0x4000, bank);
+            WriteByte(0x4000, bank);
             
             // Write RAM
             for (addr = 0xA000; addr <= endaddr; addr=addr+64) {  
@@ -244,7 +255,7 @@ void Cartridge::UploadRAM() {
                 
                 // Write to RAM
                 mreqPin_low();
-                writeByte(addr+i, bval);
+                WriteByte(addr+i, bval);
                 asm volatile("nop");
                 asm volatile("nop");
                 asm volatile("nop");
@@ -255,7 +266,16 @@ void Cartridge::UploadRAM() {
         }
         
         // Disable RAM
-        writeByte(0x0000, 0x00);
+        WriteByte(0x0000, 0x00);
         Serial.flush(); // Flush any serial data that wasn't processed
     }
+}
+
+
+
+void Cartridge::SerialPrintHeader() {
+    Serial.println(this->gameTitle);
+    Serial.println(this->cartridgeType);
+    Serial.println(this->romSize);
+    Serial.println(this->ramSize);
 }

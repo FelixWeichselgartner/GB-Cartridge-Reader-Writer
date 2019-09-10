@@ -42,8 +42,6 @@ void setup() {
   pinMode(wrPin, OUTPUT);
   pinMode(mreqPin, OUTPUT);
   pinMode(ledPin, OUTPUT);
-
-  digitalPinsINPUT();
 }
 
 void loop() {
@@ -65,19 +63,13 @@ void loop() {
   }
   readInput[readCount] = '\0';
   
-  // Turn everything off
-  rdPin_high; // RD off
-  wrPin_high; // WR off
-  mreqPin_high; // MREQ off
+  
 
   cartridge.ReadHeader();
    
   // Cartridge Header
-  else if (strstr(readInput, "HEADER")) {
-    Serial.println(gameTitle);
-    Serial.println(cartridgeType);
-    Serial.println(romSize);
-    Serial.println(ramSize);
+  if (strstr(readInput, "HEADER")) {
+    cartridge.SerialPrintHeader();
   }
 
   // Dump ROM

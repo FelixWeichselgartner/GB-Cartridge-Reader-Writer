@@ -14,19 +14,20 @@ private:
     void mreqPin_low();
     void rdPin_high();
     void rdPin_low();
-    void shortDelay();
+    void shortDelay(int);
     void digitalPinsINPUT();
     void digitalPinsOUTPUT();
 
 public:
 
+    void reset();
     Cartridge(int, int, int, int, int, int, int*);
     ~Cartridge();
 
     inline Byte getCartridgetype() { return this->cartridgeType; }
     inline Byte getRomsize() { return this->romSize; }
     inline Byte getRamsize() { return this->ramSize; }
-    inline Byte getRombanks() { return this->romBanks; }
+    inline Word getRomBanks() { return this->romBanks; }
     inline char* getGametitle() { return this->gameTitle; }
 
     Byte ReadByte(Word);
@@ -42,10 +43,13 @@ public:
     void DumpRAM();
     void UploadRAM();
 
+    void SerialPrintHeader();
+
 private:
 
     Byte cartridgeType;
-    Byte romSize, romBanks;
+    Byte romSize;
+    Word romBanks;
     Byte ramSize, ramBanks;
     char gameTitle[17];
 
