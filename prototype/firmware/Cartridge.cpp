@@ -4,9 +4,9 @@ void Cartridge::reset() {
     digitalPinsINPUT();
 
     // Turn everything off
-  rdPin_high(); // RD off
-  wrPin_high(); // WR off
-  mreqPin_high(); // MREQ off
+    rdPin_high(); // RD off
+    wrPin_high(); // WR off
+    mreqPin_high(); // MREQ off
 }
 
 Cartridge::Cartridge(
@@ -25,11 +25,14 @@ Cartridge::Cartridge(
     this->wrPin = wrPin;
     this->mreqPin = mreqPin;
 
+    this->shiftregister = new ShiftRegister74HC595(2, this->dataPin, this->clockPin, this->latchPin);
+    pinMode(this->rdPin, OUTPUT);
+    pinMode(this->wrPin, OUTPUT);
+    pinMode(this->mreqPin, OUTPUT);
+
     for (int i = 0; i < 8; i++) {
         this->dataPins[i] = dataPins[i];
     }
-
-    this->shiftregister = new ShiftRegister74HC595(2, dataPin, clockPin, latchPin);
 
     digitalPinsINPUT();
 }
