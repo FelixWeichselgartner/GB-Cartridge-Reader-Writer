@@ -37,6 +37,10 @@ Cartridge::Cartridge(
     digitalPinsINPUT();
 }
 
+Cartridge::~Cartridge() {
+    delete this->shiftregister;
+}
+
 //----------------------------------------------------------------------------------------------
 
 void Cartridge::wrPin_high() {
@@ -273,8 +277,6 @@ void Cartridge::UploadRAM() {
         Serial.flush(); // Flush any serial data that wasn't processed
     }
 }
-
-
 
 void Cartridge::SerialPrintHeader() {
     Serial.println(this->gameTitle);
