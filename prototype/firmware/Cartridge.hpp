@@ -14,9 +14,14 @@ private:
     void mreqPin_low();
     void rdPin_high();
     void rdPin_low();
+
     void shortDelay(int);
     void digitalPinsINPUT();
     void digitalPinsOUTPUT();
+
+    void rd_wr_mreq_high();
+    void rd_wr_mreq_low();
+    
 
 public:
 
@@ -52,6 +57,7 @@ private:
     Word romBanks;
     Byte ramSize, ramBanks;
     char gameTitle[17];
+    bool logoCheck;
 
     int latchPin, dataPin, clockPin, rdPin, wrPin, mreqPin;
     int dataPins[8];
