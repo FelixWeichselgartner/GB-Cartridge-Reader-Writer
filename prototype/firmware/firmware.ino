@@ -84,4 +84,6 @@ void loop() {
     else if (strstr(readInput, "WRITERAM")) {
         cartridge.UploadRAM();
     }
+
+    cartridge.rd_wr_mreq_low();
 }

@@ -19,11 +19,10 @@ private:
     void digitalPinsINPUT();
     void digitalPinsOUTPUT();
 
+public:
+
     void rd_wr_mreq_high();
     void rd_wr_mreq_low();
-    
-
-public:
 
     void reset();
     Cartridge(int, int, int, int, int, int, int*);
@@ -56,6 +55,7 @@ private:
     Byte romSize;
     Word romBanks;
     Byte ramSize, ramBanks;
+    Word ramEndAddress;
     char gameTitle[17];
     bool logoCheck;
 

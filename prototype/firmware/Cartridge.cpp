@@ -27,6 +27,13 @@ Cartridge::Cartridge(
     this->wrPin = wrPin;
     this->mreqPin = mreqPin;
 
+    this->cartridgeType = 0;
+    this->romSize = 0;
+    this->romBanks = 0;
+    this->ramSize = 0;
+    this->ramBanks = 0;
+    this->ramEndAddress = 0;
+
     this->shiftregister = new ShiftRegister74HC595(2, this->dataPin, this->clockPin, this->latchPin);
     pinMode(this->rdPin, OUTPUT);
     pinMode(this->wrPin, OUTPUT);
@@ -102,7 +109,7 @@ void Cartridge::rd_wr_mreq_low() {
 //----------------------------------------------------------------------------------------------
 
 Byte Cartridge::ReadByte(Word address) { 
-    byte val = 0x00;
+    Byte val = 0x00;
     ShiftOutAddress(address); // Shift out address
 
     mreqPin_low();
@@ -150,6 +157,8 @@ void Cartridge::ShiftOutAddress(Word address) {
 }
 
 void Cartridge::ReadHeader() {
+    rd_wr_mreq_high();
+
     // Read Cartridge Header
     for (int addr = 0x0134; addr <= 0x143; addr++) {
         char headerChar = (char) ReadByte(addr);
@@ -175,53 +184,49 @@ void Cartridge::ReadHeader() {
     this->cartridgeType = ReadByte(0x0147);
     this->romSize = ReadByte(0x0148);
     this->ramSize = ReadByte(0x0149);
-    this->romBanks = 2; // Default 32K
-    this->ramBanks = 1; // Default 8K RAM
 
-    switch(this->romSize) {
-        case 1: this->romBanks = 4; break;
-        case 2: this->romBanks = 8; break;
-        case 3: this->romBanks = 16; break;
-        case 4: this->romBanks = 32; break;
-        case 5: 
-            if (cartridgeType == 1 || cartridgeType == 2 || cartridgeType == 3) {
-                this->romBanks = 63;
-            } else {
-                this->romBanks = 64;
-            }
-            break;
-        case 6: 
-            if (cartridgeType == 1 || cartridgeType == 2 || cartridgeType == 3) {
-                this->romBanks = 125;
-            } else {
-                this->romBanks = 128;
-            }
-            break;
-        
-        case 7: this->romBanks = 256; break;
-        case 82: this->romBanks = 72; break;
-        case 83: this->romBanks = 80; break;
-        case 84: this->romBanks = 96; break;
+    // ROM banks
+    this->romBanks = 2; // Default 32K
+    if (this->romSize >= 1) { // Calculate rom size
+        this->romBanks = 2 << this->romSize;
     }
 
+    // RAM banks
+    this->ramBanks = 0; // Default 0K RAM
+    if (this->cartridgeType == 6) { this->ramBanks = 1; }
     switch(this->ramSize) {
+        case 2: this->ramBanks = 1; break;
         case 3: this->ramBanks = 4; break;
         case 4: this->ramBanks = 16; break;  // GB Camera
+        case 5: this->ramBanks = 8; break;
     }
+
+    // RAM end address
+    if (this->cartridgeType == 6) { this->ramEndAddress = 0xA1FF; } // MBC2 512bytes (nibbles)
+    if (this->ramSize == 1) { this->ramEndAddress = 0xA7FF; } // 2K RAM
+    if (this->ramSize > 1) { this->ramEndAddress = 0xBFFF; } // 8K RAM
 }
 
 void Cartridge::DumpROM() {
     rd_wr_mreq_high();
-    unsigned int addr = 0;
     
-    // Read x number of banks
-    for (int y = 1; y < romBanks; y++) {
-        WriteByte(0x2100, y); // Set ROM bank
-        if (y > 1) {addr = 0x4000;}
-        for (; addr <= 0x7FFF; addr = addr+64) {
-            uint8_t readData[64];
+    Word addr = 0;
+    
+    // Read number of banks and switch banks
+    for (int bank = 1; bank < this->romBanks; bank++) {
+        if (this->cartridgeType >= 5) { // MBC2 and above
+            WriteByte(0x2100, bank); // Set ROM bank
+        } else { // MBC1
+            WriteByte(0x6000, 0); // Set ROM Mode 
+            WriteByte(0x4000, bank >> 5); // Set bits 5 & 6 (01100000) of ROM bank
+            WriteByte(0x2000, bank & 0x1F); // Set bits 0 & 4 (00011111) of ROM bank
+        }
+        if (bank > 1) { addr = 0x4000; }
+
+        for (; addr <= 0x7FFF; addr += 64) {
+            Byte readData[64];
             for(int i = 0; i < 64; i++){
-                readData[i] = ReadByte(addr+i);
+                readData[i] = ReadByte(addr + i);
             }
             Serial.write(readData, 64);
         }
@@ -229,17 +234,17 @@ void Cartridge::DumpROM() {
 }
 
 void Cartridge::DumpRAM() {
+    rd_wr_mreq_high();
+
     // MBC2 Fix (unknown why this fixes it, maybe has to read ROM before RAM?)
     ReadByte(0x0134);
-
-    unsigned int addr = 0;
-    unsigned int endaddr = 0;
-    if (cartridgeType == 6 && ramSize == 0) { endaddr = 0xA1FF; } // MBC2 512bytes (nibbles)
-    if (ramSize == 1) { endaddr = 0xA7FF; } // 2K RAM
-    if (ramSize > 1) { endaddr = 0xBFFF; } // 8K RAM
     
     // Does cartridge have RAM
-    if (endaddr > 0) {
+    if (this->ramEndAddress > 0) {
+        if (cartridgeType <= 4) { // MBC1
+            WriteByte(0x6000, 1); // Set RAM Mode
+        }
+
         // Initialise MBC
         WriteByte(0x0000, 0x0A);
 
@@ -248,10 +253,10 @@ void Cartridge::DumpRAM() {
             WriteByte(0x4000, bank);
 
             // Read RAM
-            for (addr = 0xA000; addr <= endaddr; addr = addr+64) {  
+            for (unsigned int addr = 0xA000; addr <= this->ramEndAddress; addr += 64) {  
                 uint8_t readData[64];
                 for(int i = 0; i < 64; i++){
-                    readData[i] = ReadByte(addr+i);
+                    readData[i] = ReadByte(addr + i);
                 }
                 Serial.write(readData, 64);
             }
@@ -263,16 +268,17 @@ void Cartridge::DumpRAM() {
 }
 
 void Cartridge::UploadRAM() {
+    rd_wr_mreq_high();
+
     // MBC2 Fix (unknown why this fixes it, maybe has to read ROM before RAM?)
     ReadByte(0x0134);
-    unsigned int addr = 0;
-    unsigned int endaddr = 0;
-    if (cartridgeType == 6 && ramSize == 0) { endaddr = 0xA1FF; } // MBC2 512bytes (nibbles)
-    if (ramSize == 1) { endaddr = 0xA7FF; } // 2K RAM
-    if (ramSize > 1) { endaddr = 0xBFFF; } // 8K RAM
     
     // Does cartridge have RAM
-    if (endaddr > 0) {
+    if (this->ramEndAddress > 0) {
+        if (cartridgeType <= 4) { // MBC1
+            WriteByte(0x6000, 1); // Set RAM Mode
+        }
+
         // Initialise MBC
         WriteByte(0x0000, 0x0A);
         
@@ -281,25 +287,22 @@ void Cartridge::UploadRAM() {
             WriteByte(0x4000, bank);
             
             // Write RAM
-            for (addr = 0xA000; addr <= endaddr; addr=addr+64) {  
+            for (unsigned int addr = 0xA000; addr <= this->ramEndAddress; addr += 64) {  
             
-            // Wait for serial input
-            for (uint8_t i = 0; i < 64; i++) {
                 // Wait for serial input
-                while (Serial.available() <= 0);
-                
-                // Read input
-                uint8_t bval = (uint8_t) Serial.read();
-                
-                // Write to RAM
-                mreqPin_low();
-                WriteByte(addr+i, bval);
-                asm volatile("nop");
-                asm volatile("nop");
-                asm volatile("nop");
-                shortDelay(10);
-                mreqPin_high(); 
-            }
+                for (Byte i = 0; i < 64; i++) {
+                    // Wait for serial input
+                    while (Serial.available() <= 0);
+                    
+                    // Read input
+                    Byte bval = (Byte) Serial.read();
+                    
+                    // Write to RAM
+                    mreqPin_low();
+                    WriteByte(addr + i, bval);
+                    shortDelay(10);
+                    mreqPin_high(); 
+                }
             }
         }
         
@@ -314,5 +317,5 @@ void Cartridge::SerialPrintHeader() {
     Serial.println(this->cartridgeType);
     Serial.println(this->romSize);
     Serial.println(this->ramSize);
-    Serial.println(this->logoCheck)
+    //Serial.println(this->logoCheck);
 }
