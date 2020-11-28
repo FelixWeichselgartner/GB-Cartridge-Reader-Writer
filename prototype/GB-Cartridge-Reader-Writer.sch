@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.3.0">
+<eagle version="9.5.2">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -7837,6 +7837,7 @@ Source: www.kingbright.com</description>
 <part name="LED1" library="led" library_urn="urn:adsk.eagle:library:259" deviceset="LED" device="5MM" package3d_urn="urn:adsk.eagle:package:15799/2"/>
 <part name="R30" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0207/10" package3d_urn="urn:adsk.eagle:package:23491/1" value="220R"/>
 <part name="R31" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0207/10" package3d_urn="urn:adsk.eagle:package:23491/1" value="10K"/>
+<part name="R32" library="rcl" library_urn="urn:adsk.eagle:library:334" deviceset="R-EU_" device="0207/10" package3d_urn="urn:adsk.eagle:package:23491/1" value="470R"/>
 </parts>
 <sheets>
 <sheet>
@@ -7990,6 +7991,10 @@ Source: www.kingbright.com</description>
 <instance part="R31" gate="G$1" x="81.28" y="-5.08" smashed="yes">
 <attribute name="NAME" x="77.47" y="-3.5814" size="1.778" layer="95"/>
 <attribute name="VALUE" x="77.47" y="-8.382" size="1.778" layer="96"/>
+</instance>
+<instance part="R32" gate="G$1" x="-53.34" y="-55.88" smashed="yes">
+<attribute name="NAME" x="-57.15" y="-54.3814" size="1.778" layer="95"/>
+<attribute name="VALUE" x="-57.15" y="-59.182" size="1.778" layer="96"/>
 </instance>
 </instances>
 <busses>
@@ -8588,6 +8593,23 @@ Source: www.kingbright.com</description>
 <wire x1="96.52" y1="-83.82" x2="96.52" y2="88.9" width="0.1524" layer="91"/>
 <wire x1="96.52" y1="88.9" x2="77.47" y2="88.9" width="0.1524" layer="91"/>
 <wire x1="77.47" y1="68.58" x2="77.47" y2="88.9" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$27" class="0">
+<segment>
+<pinref part="U$2" gate="G$1" pin="CS"/>
+<pinref part="R32" gate="G$1" pin="1"/>
+<wire x1="-60.96" y1="-55.88" x2="-58.42" y2="-55.88" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$64" class="0">
+<segment>
+<pinref part="R32" gate="G$1" pin="2"/>
+<wire x1="91.44" y1="5.08" x2="91.44" y2="-55.88" width="0.1524" layer="91"/>
+<wire x1="91.44" y1="-55.88" x2="-48.26" y2="-55.88" width="0.1524" layer="91"/>
+<pinref part="U$1" gate="G$1" pin="A5"/>
+<wire x1="82.55" y1="7.62" x2="82.55" y2="5.08" width="0.1524" layer="91"/>
+<wire x1="82.55" y1="5.08" x2="91.44" y2="5.08" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>

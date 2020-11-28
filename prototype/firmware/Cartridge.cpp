@@ -112,11 +112,13 @@ Byte Cartridge::ReadByte(Word address) {
     Byte val = 0x00;
     ShiftOutAddress(address); // Shift out address
 
+    shortDelay(40);
+
     mreqPin_low();
     rdPin_low();
 
     // Delay a little (minimum is 2 (not for me) nops, using 10 to be sure)
-    shortDelay(10);
+    shortDelay(40);
     
     for (int i = 0; i < 8; i++) {
         if (digitalRead(dataPins[i])) {
@@ -126,7 +128,7 @@ Byte Cartridge::ReadByte(Word address) {
     
     rdPin_high();
     mreqPin_high();
-    shortDelay(10);
+    shortDelay(40);
     
     return val;
 }
@@ -140,10 +142,11 @@ void Cartridge::WriteByte(Word address, Byte data) {
         digitalWrite(dataPins[i], data & (0x01 << i));
     }
 
+    shortDelay(40);
     wrPin_low();
-    shortDelay(10);
+    shortDelay(40);
     wrPin_high();
-    shortDelay(10);
+    shortDelay(40);
 
     digitalPinsINPUT();
 }
@@ -153,7 +156,6 @@ void Cartridge::ShiftOutAddress(Word address) {
         shiftregister->setNoUpdate(i, ((address & 0xFFFF) & (1 << i)) == (1 << i));
     }
     shiftregister->updateRegisters();
-    shortDelay(10);
 }
 
 void Cartridge::ReadHeader() {
@@ -213,9 +215,13 @@ void Cartridge::DumpROM() {
     Word addr = 0;
     
     // Read number of banks and switch banks
-    for (int bank = 1; bank < this->romBanks; bank++) {
-        if (this->cartridgeType >= 5) { // MBC2 and above
-            WriteByte(0x2100, bank); // Set ROM bank
+    for (Word bank = 1; bank < this->romBanks; bank++) {/*
+        if (this->cartridgeType >= 0x19 && this->cartridgeType <= 0x1E) { // MBC5
+            WriteByte(0x2000, bank & 0xFF);
+            WriteByte(0x3000, (bank & 0x100) ? 0x01 : 0x00);
+        } else*/ if (this->cartridgeType >= 5) { // MBC2 and above
+            WriteByte(0x2100, bank & 0xFF); // Set ROM bank
+            WriteByte(0x3000, bank > 0x100 ? 0x01 : 0x00);
         } else { // MBC1
             WriteByte(0x6000, 0); // Set ROM Mode 
             WriteByte(0x4000, bank >> 5); // Set bits 5 & 6 (01100000) of ROM bank
@@ -249,7 +255,7 @@ void Cartridge::DumpRAM() {
         WriteByte(0x0000, 0x0A);
 
         // Switch RAM banks
-        for (int bank = 0; bank < ramBanks; bank++) {
+        for (Byte bank = 0; bank < this->ramBanks; bank++) {
             WriteByte(0x4000, bank);
 
             // Read RAM
@@ -300,7 +306,7 @@ void Cartridge::UploadRAM() {
                     // Write to RAM
                     mreqPin_low();
                     WriteByte(addr + i, bval);
-                    shortDelay(10);
+                    shortDelay(100);
                     mreqPin_high(); 
                 }
             }

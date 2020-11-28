@@ -1,0 +1,12 @@
+[submodule "submodules/Adafruit-Eagle-Library"]
+	path = submodules/Adafruit-Eagle-Library
+	url = https://github.com/adafruit/Adafruit-Eagle-Library.git
+[submodule "submodules/Eagle-Libraries"]
+	path = submodules/Eagle-Libraries
+	url = https://github.com/JRodrigoTech/Eagle-Libraries.git
+[submodule "submodules/rlx-eagle-libs"]
+	path = submodules/rlx-eagle-libs
+	url = https://github.com/robelix/rlx-eagle-libs.git
+[submodule "submodules/ShiftRegister74HC595"]
+	path = submodules/ShiftRegister74HC595
+	url = https://github.com/Simsso/ShiftRegister74HC595.git

@@ -42,7 +42,7 @@ void led_low() {
 }
 
 void setup() {
-    Serial.begin(400000);
+    Serial.begin(74880);
     pinMode(ledPin, OUTPUT);
 }
 
@@ -65,8 +65,19 @@ void loop() {
     }
     readInput[readCount] = '\0';
     
-
     cartridge.ReadHeader();
+
+    /*for (unsigned short i = 0; i < 4; i++) {
+        //cartridge.WriteByte(0x6000, 0); // Set ROM Mode 
+        //cartridge.WriteByte(0x4000, i >> 5); // Set bits 5 & 6 (01100000) of ROM bank
+        //cartridge.WriteByte(0x2000, i & 0x1F); // Set bits 0 & 4 (00011111) of ROM bank
+        cartridge.WriteByte(0x2100, i & 0xFF);
+        //cartridge.WriteByte(0x3000, 0);
+        Serial.print(i);
+        Serial.print(": ");
+        Byte data1 = cartridge.ReadByte(0x4000);
+        Serial.println(data1);
+    }*/
     
     // Cartridge Header
     if (strstr(readInput, "HEADER")) {

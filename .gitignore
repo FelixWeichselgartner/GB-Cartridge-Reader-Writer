@@ -1,0 +1,6 @@
+*.gb
+*.sav
+*.pdf
+debug/
+versions/
+remove/
