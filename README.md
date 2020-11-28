@@ -1,6 +1,6 @@
 # GB-Cartridge-Reader-Writer
 
-This project is strongly inspired by this project:
+This is an Arduino Shield, that can be used to dump GameBoy cartridges. This project is strongly inspired by this project:
 
 * https://www.insidegadgets.com/2011/03/19/gbcartread-arduino-based-gameboy-cart-reader-%E2%80%93-part-1-read-the-rom/
 * https://github.com/insidegadgets/GBCartRead
