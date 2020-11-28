@@ -28,6 +28,7 @@ Used libraries (see submodules):
 # License
 
 Copyright (c) 2011-2016 by insideGadgets
+
 Copyright (c) 2019-2020 by Felix Weichselgartner (on the changes)
 
 Creative Commons - Attribution-NonCommercial 3.0 Unported (see License.txt)
