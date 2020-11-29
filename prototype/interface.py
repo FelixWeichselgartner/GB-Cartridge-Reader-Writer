@@ -26,7 +26,7 @@ def format_filename(s):
 # You can lower the baud rate of 400Kbit if you have issues connecting to the Arduino or the ROM has checksum errors
 windows = 'COM7'
 linux = '/dev/ttyACM0'
-ser = serial.Serial(windows, 74880, timeout=1) 
+ser = serial.Serial(windows, 115200, timeout=1) 
 
 sys.stdout.write('\nGBCartRead v1.6 by insideGadgets\n')
 sys.stdout.write('#################################\n')

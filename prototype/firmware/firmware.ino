@@ -18,20 +18,11 @@
  
 */
 
-// ShiftRegisters
-int latchPin = 10;
-int dataPin = 11;
-int clockPin = 12;
-// Cartridge
-int rdPin = A1;
-int wrPin = 13;
-int mreqPin = A4;
-int dataPins[8] = {2, 3, 4, 5, 6, 7, 8, 9};
 // Shield
 int ledPin = A3;
 
 #include "Cartridge.hpp"
-Cartridge cartridge(dataPin, clockPin, latchPin, rdPin, wrPin, mreqPin, dataPins);
+Cartridge cartridge;
 
 void led_high() {
     digitalWrite(ledPin, HIGH);
@@ -42,7 +33,7 @@ void led_low() {
 }
 
 void setup() {
-    Serial.begin(74880);
+    Serial.begin(115200);
     pinMode(ledPin, OUTPUT);
 }
 
@@ -66,18 +57,6 @@ void loop() {
     readInput[readCount] = '\0';
     
     cartridge.ReadHeader();
-
-    /*for (unsigned short i = 0; i < 4; i++) {
-        //cartridge.WriteByte(0x6000, 0); // Set ROM Mode 
-        //cartridge.WriteByte(0x4000, i >> 5); // Set bits 5 & 6 (01100000) of ROM bank
-        //cartridge.WriteByte(0x2000, i & 0x1F); // Set bits 0 & 4 (00011111) of ROM bank
-        cartridge.WriteByte(0x2100, i & 0xFF);
-        //cartridge.WriteByte(0x3000, 0);
-        Serial.print(i);
-        Serial.print(": ");
-        Byte data1 = cartridge.ReadByte(0x4000);
-        Serial.println(data1);
-    }*/
     
     // Cartridge Header
     if (strstr(readInput, "HEADER")) {
@@ -95,6 +74,4 @@ void loop() {
     else if (strstr(readInput, "WRITERAM")) {
         cartridge.UploadRAM();
     }
-
-    cartridge.rd_wr_mreq_low();
 }
