@@ -1,4 +1,6 @@
 *.gb
+*.gbc
+*.gba
 *.sav
 *.pdf
 debug/
