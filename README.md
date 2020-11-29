@@ -20,7 +20,7 @@ The code in this repo is based on this, however I did a lot of changes to the Ar
 | Pokémon Red (MBC5)     | yes      | ?        | ?          |
 | Pokémon Yellow (MBC5)  | yes      | yes      | ?          |
 | Pokémon Silver (MBC5)  | no       | ?        | ?          |
-| Pokémon Crystal (MBC5) | no       | ?        | ?          |
+| Pokémon Crystal (MBC3) | no       | ?        | ?          |
 | Pokémon TCG (MBC5)     | yes      | yes      | ?          |
 
 # Eagle Layout for the Arduino shield
